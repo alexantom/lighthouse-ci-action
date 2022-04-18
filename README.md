@@ -64,6 +64,11 @@ For the GitHub Status Checks on PR. One of the two arguments is required:
 * `lhci_github_app_token` - (optional) [Lighthouse GitHub app](https://github.com/apps/lighthouse-ci) token
 * `lhci_github_token` - (optional) GitHub personal access token
 
+For pushing report to customer Lighthouse CI Server:
+* `lhci_server_base_url` - (optional) The base URL of the LHCI server to upload to. `Required` when using lhci_target=lhci [Config](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md#serverbaseurl)
+* `lhci_token` - (optional) (The build token for your Lighthouse CI project. `Required` when using lhci_target=lhci) [Config](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md#token)
+* `lhci_target` - (optional) The target location to which Lighthouse CI should upload the reports [Config](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md#target)
+
 For more details on the implications of choosing one over the other, refer to the [Lighthouse CI Getting Started Page](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/getting-started.md#github-status-checks)
 
 ### Deprecated authentication configuration

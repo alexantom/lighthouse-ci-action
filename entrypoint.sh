@@ -17,6 +17,7 @@
 [[ -n "$INPUT_COLLECTION_HANDLE" ]] && export SHOP_COLLECTION_HANDLE="$INPUT_COLLECTION_HANDLE"
 [[ -n "$INPUT_THEME_ROOT" ]]        && export THEME_ROOT="$INPUT_THEME_ROOT"
 
+
 # Authentication creds
 export SHOP_ACCESS_TOKEN="$INPUT_ACCESS_TOKEN"
 
@@ -28,6 +29,11 @@ export SHOP_ACCESS_TOKEN="$INPUT_ACCESS_TOKEN"
 # the GitHub Pull Request.
 [[ -n "$INPUT_LHCI_GITHUB_APP_TOKEN" ]] && export LHCI_GITHUB_APP_TOKEN="$INPUT_LHCI_GITHUB_APP_TOKEN"
 [[ -n "$INPUT_LHCI_GITHUB_TOKEN" ]]     && export LHCI_GITHUB_TOKEN="$INPUT_LHCI_GITHUB_TOKEN"
+
+# Optional, these are used if we want to push report to customer lighthouse server
+[[ -n "$INPUT_LHCI_TOKEN" ]]    && export LHCI_TOKEN="$INPUT_LHCI_TOKEN"
+[[ -n "$INPUT_ LHCI_SERVER_BASE_URL" ]] && export LHCI_SERVER_BASE_URL="$INPUT_LHCI_SERVER_BASE_URL"
+[[ -n "$INPUT_ LHCI_TARGET" ]]        && export LHCI_TARGET="$INPUT_LHCI_TARGET"
 
 # Optional, these are used
 [[ -n "$INPUT_LHCI_MIN_SCORE_PERFORMANCE" ]]   && export LHCI_MIN_SCORE_PERFORMANCE="$INPUT_LHCI_MIN_SCORE_PERFORMANCE"
