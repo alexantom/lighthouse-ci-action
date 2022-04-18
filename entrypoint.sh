@@ -11,13 +11,18 @@
 #
 # Here, we're translating the GitHub action input arguments into environment variables
 # for this scrip to use.
-[[ -n "$INPUT_APP_ID" ]]            && export SHOP_APP_ID="$INPUT_APP_ID"
-[[ -n "$INPUT_APP_PASSWORD" ]]      && export SHOP_APP_PASSWORD="$INPUT_APP_PASSWORD"
 [[ -n "$INPUT_STORE" ]]             && export SHOP_STORE="$INPUT_STORE"
 [[ -n "$INPUT_PASSWORD" ]]          && export SHOP_PASSWORD="$INPUT_PASSWORD"
 [[ -n "$INPUT_PRODUCT_HANDLE" ]]    && export SHOP_PRODUCT_HANDLE="$INPUT_PRODUCT_HANDLE"
 [[ -n "$INPUT_COLLECTION_HANDLE" ]] && export SHOP_COLLECTION_HANDLE="$INPUT_COLLECTION_HANDLE"
 [[ -n "$INPUT_THEME_ROOT" ]]        && export THEME_ROOT="$INPUT_THEME_ROOT"
+
+# Authentication creds
+export SHOP_ACCESS_TOKEN="$INPUT_ACCESS_TOKEN"
+
+# Authentication creds (deprecated)
+[[ -n "$INPUT_APP_ID" ]]               && export SHOP_APP_ID="$INPUT_APP_ID"
+[[ -n "$INPUT_APP_PASSWORD" ]]         && export SHOP_APP_PASSWORD="$INPUT_APP_PASSWORD"
 
 # Optional, these are used by Lighthouse CI to add pass/fail checks on
 # the GitHub Pull Request.
@@ -56,14 +61,24 @@ is_installed() {
 
 api_request() {
   local url="$1"
-  local username="$SHOP_APP_ID"
-  local password="$SHOP_APP_PASSWORD"
   local err="$(mktemp)"
   local out="$(mktemp)"
 
   set +e
-  curl -sS -f -X GET -u "$username:$password" "$url" \
-    1> "$out" 2> "$err"
+  if [[ -n "$SHOP_ACCESS_TOKEN" ]]; then
+    curl -sS -f -X GET \
+      "$url" \
+      -H "X-Shopify-Access-Token: ${SHOP_ACCESS_TOKEN}" \
+      1> "$out" \
+      2> "$err"
+  else
+    local username="$SHOP_APP_ID"
+    local password="$SHOP_APP_PASSWORD"
+    curl -sS -f -X GET \
+      -u "$username:$password" "$url" \
+      1> "$out" \
+      2> "$err"
+  fi
   set -e
 
   local exit_code="$?"
@@ -126,7 +141,12 @@ YAML
 # Secret environment variable that turns shopify CLI into CI mode that accepts environment credentials
 export CI=1
 export SHOPIFY_SHOP="${SHOP_STORE#*(https://|http://)}"
-export SHOPIFY_PASSWORD="$SHOP_APP_PASSWORD"
+
+if [[ -n "$SHOP_ACCESS_TOKEN" ]]; then
+  export SHOPIFY_PASSWORD="$SHOP_ACCESS_TOKEN"
+else
+  export SHOPIFY_PASSWORD="$SHOP_APP_PASSWORD"
+fi
 
 shopify login
 
@@ -142,6 +162,7 @@ step "Creating development theme"
 theme_push_log="$(mktemp)"
 shopify theme push --development --json $theme_root > "$theme_push_log" && cat "$theme_push_log"
 preview_url="$(cat "$theme_push_log" | tail -n 1 | jq -r '.theme.preview_url')"
+preview_id="$(cat "$theme_push_log" | tail -n 1 | jq -r '.theme.id')"
 
 step "Configuring Lighthouse CI"
 
@@ -164,7 +185,7 @@ else
 fi
 
 # Disable redirects + preview bar
-query_string="?_fd=0&pb=0"
+query_string="?preview_theme_id=${preview_id}&_fd=0&pb=0"
 min_score_performance="${LHCI_MIN_SCORE_PERFORMANCE:-0.6}"
 min_score_accessibility="${LHCI_MIN_SCORE_ACCESSIBILITY:-0.9}"
 
@@ -204,7 +225,7 @@ module.exports = async (browser) => {
   // Get password cookie if password is set
   if ('$shop_password' !== '') {
     console.error('Getting password cookie...');
-    await page.goto('$host/password');
+    await page.goto('$host/password$query_string');
     await page.waitForSelector('form[action*=password] input[type="password"]');
     await page.\$eval('form[action*=password] input[type="password"]', input => input.value = '$shop_password');
     await Promise.all([
